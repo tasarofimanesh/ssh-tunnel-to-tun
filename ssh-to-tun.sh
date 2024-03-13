@@ -1,5 +1,25 @@
 #!/bin/bash
 
+#-----------------------------------------------
+#Check existance of ovpn and pass files
+
+if [ $(ls| grep nord.ovpn | wc -l) -ne 1 ]
+then
+    echo "file 'nord.ovpn' not found!"
+    exit
+fi
+
+if [ $(ls| grep pass.txt | wc -l) -ne 1 ]
+then
+    echo "file 'pass.txt' not found!"
+    exit
+fi
+
+if [ $(cat nord.ovpn | grep "auth-user-pass /opt/pass.txt"| wc -l) -eq 0 ]
+then
+    sed -i "s|auth-user-pass|auth-user-pass /opt/pass.txt|g" nord.ovpn
+fi
+
 #------------------------------------------------
 #Mark outgoing packets of ssh connection with an fwmark of 2
 
@@ -55,3 +75,42 @@ if [ $openvpn_service_desc_linecount -eq 0 ]
 then
     apt install openvpn -y
 fi
+
+#------------------------------------------------------
+function kill_ovpn()
+{
+    ovpn_ids=$(ps aux | grep "openvpn --config" | grep -v grep | awk '{print $2}')
+    for ovpn_id in $ovpn_ids
+    do
+        kill $ovpn_id
+    done
+
+}
+
+function connect_ovpn()
+{
+    cnt=0
+    while [ $(ip a | grep tun[1-9]: | wc -l) -eq 0 ]
+    do
+        kill_ovpn
+        openvpn --config nord.ovpn --daemon
+        for i in {1..5}
+        do
+            echo "connecting to nord..."
+            sleep 1
+            if [ $(ip a | grep tun[1-9]: | wc -l) -ne 0 ]
+            then
+                echo "connected"
+                break
+            fi
+        done
+        cnt=$(( $cnt + 1 ))
+        if [ $cnt -gt 5 ]
+        then
+            echo "Unable to connect to nord server"
+            exit
+        fi
+    done
+}
+
+connect_ovpn
