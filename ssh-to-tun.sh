@@ -52,7 +52,7 @@ done
 ovpn2_count=$(cat /etc/iproute2/rt_tables | grep ovpn2 | wc -l)
 if [ $ovpn2_count -eq 0 ]
 then
-    echo "10 ovpn" >> /etc/iproute2/rt_tables
+    echo "10 ovpn2" >> /etc/iproute2/rt_tables
 fi
 
 #--------------------------------------------------
