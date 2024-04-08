@@ -61,7 +61,7 @@ fi
 ovpn2_lookup_count=$(ip rule show | grep "from all fwmark 0x2 lookup ovpn2" | wc -l)
 if [ $ovpn2_lookup_count -eq 0 ]
 then
-    ip rule add from all fwmark 2 lookup ovpn2 > dev/null
+    ip rule add from all fwmark 2 lookup ovpn2 > /dev/null
 fi
 
 #---------------------------------------------------
