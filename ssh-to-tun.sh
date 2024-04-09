@@ -80,7 +80,10 @@ fi
 openvpn_service_desc_linecount=$(service openvpn status 2> /dev/null | wc -l)
 if [ $openvpn_service_desc_linecount -eq 0 ]
 then
-    apt install openvpn -y
+    apt install openvpn -y &
+    echo "Intalling OpenVpn..."
+    wait $!
+    echo "OpenVpn intallation is done."
 fi
 
 #------------------------------------------------------
@@ -96,16 +99,19 @@ function kill_ovpn()
 
 function connect_ovpn()
 {
+
     cnt=0
-    while [ $(ip a | grep tun[1-9]: | wc -l) -eq 0 ]
+    kill_ovpn
+    while [ $(ip a | grep tun-nord | wc -l) -eq 0 ]
     do
         kill_ovpn
+        sed -i "s/dev tun$/dev tun-nord/g" nord.ovpn
         openvpn --config nord.ovpn --daemon
         for i in {1..5}
         do
             echo "connecting to nord..."
             sleep 1
-            if [ $(ip a | grep tun[1-9]: | wc -l) -ne 0 ]
+            if [ $(ip a | grep tun-nord | wc -l) -ne 0 ]
             then
                 echo "connected"
                 break
@@ -118,6 +124,11 @@ function connect_ovpn()
             exit
         fi
     done
+
+    if [ $(iptables -t nat -nvL POSTROUTING | grep tun-nord | wc -l) -eq 0 ]
+    then
+        iptables -t nat -A POSTROUTING -o tun-nord -j MASQUERADE
+    fi
 }
 
 connect_ovpn
