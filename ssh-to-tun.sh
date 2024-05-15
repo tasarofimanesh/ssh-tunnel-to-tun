@@ -46,6 +46,10 @@ do
     set_fwmark $p
 done
 
+# Mark outgoing packets of icmp protocol (used for ping) with an fwmark of 2
+
+iptables -t mangle -A OUTPUT -p icmp  -j MARK --set-mark 2
+
 #--------------------------------------------------
 #Create a new table named ovpn2 in rt_tables
 
